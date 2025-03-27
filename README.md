@@ -1,8 +1,7 @@
 # Test multiupath, Kubevirt, persistent reservation and failover
 
-Scripts and examples available at https://github.com/alicefr/kubevirt-pr-mpath
-Cluster setup
-Until the upstream PR for updating the multipath libraries isn’t merged, please build KubeVirt from this branch.
+## Cluster setup
+Until the [upstream PR](https://github.com/kubevirt/kubevirt/pull/14353) for updating the multipath libraries isn’t merged, please build KubeVirt from this branch.
 
 ## Create the cluster with 2 nodes and persistent reservation feature gate enable
 ```bash

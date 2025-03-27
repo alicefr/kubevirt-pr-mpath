@@ -47,7 +47,7 @@ kubectl exec -ti -n kubevirt $handler -- nsenter -a -t 1 iscsiadm --mode discove
 Either with `kubevirtci/cluster-up/ssh.sh node01` or execing in virt-handler:
 ```bash
 handler=$(kubectl get po -n kubevirt -l kubevirt.io=virt-handler --no-headers=true -o custom-columns=":metadata.name" --field-selector spec.nodeName=node02)
-kubectl exec -ti -n kubevirt $handler -- nsenter -a -t 1 /install-multipath.sh
+kubectl exec -ti -n kubevirt $handler -- nsenter -a -t 1
 ```
 
 Deploy the VM with persistent reservation

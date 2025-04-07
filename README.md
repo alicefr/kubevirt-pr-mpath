@@ -1,8 +1,6 @@
 # Test multiupath, Kubevirt, persistent reservation and failover
 
 ## Cluster setup
-Until the [upstream PR](https://github.com/kubevirt/kubevirt/pull/14353) for updating the multipath libraries isn’t merged, please build KubeVirt from this branch.
-
 ## Create the cluster with 2 nodes and persistent reservation feature gate enable
 ```bash
 export FEATURE_GATES=PersistentReservation
@@ -59,4 +57,42 @@ kubectl apply -f vm.yaml
 Log into the VM:
 ```bash
 virtctl console vm
+```
+
+# Check the VM behavior during the multipath failover
+
+Write on the disk from inside the guest:
+```
+dd if=/dev/urandom of=/dev/sda oflag=direct
+```
+On the node where the VM is running, identify the active device and set it offline:
+```
+[root@node02 ~]# multipath -ll
+$ mpatha (36001405ebbdd420c71e4f258347dfd98) dm-0 LIO-ORG,disk1
+size=1.0G features='0' hwhandler='1 alua' wp=rw
+|-+- policy='service-time 0' prio=50 status=active
+| `- 6:0:0:0 sda 8:0  active ready running
+`-+- policy='service-time 0' prio=50 status=enabled
+  `- 7:0:0:0 sdb 8:16 active ready running
+$  echo offline > /sys/block/sda/device/state
+```
+
+The VM will go on `Paused` state, but it should recover and be in running after around 30s.
+```bash
+$ kubectl get vm
+NAME   AGE   STATUS   READY
+vm     14m   Paused   False
+[after 30s]
+$ kubectl get vm
+NAME   AGE   STATUS    READY
+vm     14m   Running   True
+```
+
+You should also be able to see the IO error in the events:
+```bash
+$ kubectl get events
+LAST SEEN   TYPE      REASON                    OBJECT                               MESSAGE
+10m         Normal    Created                   virtualmachineinstance/vm            VirtualMachineInstance defined.
+10m         Normal    Started                   virtualmachineinstance/vm            VirtualMachineInstance started.
+8s          Warning   IOerror                   virtualmachineinstance/vm            VM Paused due to IO error at the volume: scsidisk
 ```
